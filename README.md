@@ -39,4 +39,5 @@ Powered by [Seismic](https://www.seismic.systems/) — The Encrypted Blockchain
 
 ## License
 
+
 MIT License - Feel free to use and modify!
