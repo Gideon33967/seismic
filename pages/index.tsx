@@ -237,7 +237,7 @@ export default function SeismicPrivacyAcademy() {
     ctx.fillText('Learn blockchain privacy like you are 10!', 320, 480);
     
     ctx.font = 'bold 32px Arial';
-    ctx.fillText('lab.seismic.systems', 420, 540);
+    ctx.fillText('seismicacademy.vercel.app', 380, 540);
 
     ctx.font = '20px Arial';
     ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
@@ -251,7 +251,7 @@ export default function SeismicPrivacyAcademy() {
     const badge = getBadge(score);
     const badgeName = badge ? badge.name : '';
     const badgeEmoji = badge ? badge.emoji : '🏆';
-    const text = `Just aced the Privacy IQ Challenge on Seismic Academy! 🔐\n\nMy Score: ${score}% ${badgeEmoji} ${badgeName ? `(${badgeName} Badge)` : ''}\n\nLearned how encrypted blockchains protect fintech users—using animations even a 10-year-old could understand! 🎓\n\nTry it yourself: https://lab.seismic.systems\n\n#SeismicPrivacy #BlockchainEducation`;
+    const text = `Just finished the Privacy IQ Challenge on Seismic Academy! 🔐\n\nMy Score: ${score}% ${badgeEmoji}${badgeName ? ` (${badgeName})` : ''}\n\nLearned how encrypted blockchains protect fintech users, using animations even anyone could understand! 🎓\n\nTry it yourself: https://seismicacademy.vercel.app\n\n@seismicSys #PrivacyBlockchain`;
     
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
     window.open(twitterUrl, '_blank');
