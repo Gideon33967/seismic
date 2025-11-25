@@ -110,7 +110,7 @@ const badges = {
   diamond: { name: 'Seismic Genius', emoji: '💎', minScore: 100, color: '#B9F2FF' }
 };
 
-const getBadge = (score) => {
+const getBadge = (score: number) => {
   if (score === 100) return badges.diamond;
   if (score >= 90) return badges.gold;
   if (score >= 80) return badges.silver;
@@ -525,3 +525,4 @@ export default function SeismicPrivacyAcademy() {
 
   return null;
 }
+
