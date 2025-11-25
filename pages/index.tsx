@@ -120,13 +120,13 @@ const getBadge = (score: number) => {
 
 // Main App Component
 export default function SeismicPrivacyAcademy() {
-  const [currentView, setCurrentView] = useState('home');
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState([]);
-  const [showExplanation, setShowExplanation] = useState(false);
-  const [selectedAnswer, setSelectedAnswer] = useState(null);
-  const [quizCompleted, setQuizCompleted] = useState(false);
-  const canvasRef = useRef(null);
+  const [currentView, setCurrentView] = useState<'home' | 'quiz' | 'results'>('home');
+  const [currentQuestion, setCurrentQuestion] = useState<number>(0);
+  const [answers, setAnswers] = useState<Array<{ questionId: number; correct: boolean }>>([]);
+  const [showExplanation, setShowExplanation] = useState<boolean>(false);
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [quizCompleted, setQuizCompleted] = useState<boolean>(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const calculateScore = () => {
     const correct = answers.filter(a => a.correct).length;
