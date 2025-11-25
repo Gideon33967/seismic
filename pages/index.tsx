@@ -2,8 +2,35 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, Shield, Eye, EyeOff, Trophy, Share2, ChevronRight, Sparkles, Award, Star, Twitter } from 'lucide-react';
 
+// Type Definitions
+interface QuizOption {
+  text: string;
+  correct: boolean;
+}
+
+interface QuizQuestion {
+  id: number;
+  level: string;
+  question: string;
+  options: QuizOption[];
+  explanation: string;
+  funFact: string;
+}
+
+interface Badge {
+  name: string;
+  emoji: string;
+  minScore: number;
+  color: string;
+}
+
+interface Answer {
+  questionId: number;
+  correct: boolean;
+}
+
 // Quiz Questions Database
-const quizQuestions = [
+const quizQuestions: QuizQuestion[] = [
   {
     id: 1,
     level: 'rookie',
@@ -103,14 +130,14 @@ const quizQuestions = [
 ];
 
 // Badge definitions
-const badges = {
+const badges: Record<string, Badge> = {
   bronze: { name: 'Privacy Newbie', emoji: '🥉', minScore: 70, color: '#CD7F32' },
   silver: { name: 'Privacy Builder', emoji: '🥈', minScore: 80, color: '#C0C0C0' },
   gold: { name: 'Privacy Master', emoji: '🥇', minScore: 90, color: '#FFD700' },
   diamond: { name: 'Seismic Genius', emoji: '💎', minScore: 100, color: '#B9F2FF' }
 };
 
-const getBadge = (score: number) => {
+const getBadge = (score: number): Badge | null => {
   if (score === 100) return badges.diamond;
   if (score >= 90) return badges.gold;
   if (score >= 80) return badges.silver;
@@ -122,18 +149,18 @@ const getBadge = (score: number) => {
 export default function SeismicPrivacyAcademy() {
   const [currentView, setCurrentView] = useState<'home' | 'quiz' | 'results'>('home');
   const [currentQuestion, setCurrentQuestion] = useState<number>(0);
-  const [answers, setAnswers] = useState<Array<{ questionId: number; correct: boolean }>>([]);
+  const [answers, setAnswers] = useState<Answer[]>([]);
   const [showExplanation, setShowExplanation] = useState<boolean>(false);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [quizCompleted, setQuizCompleted] = useState<boolean>(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const calculateScore = () => {
-    const correct = answers.filter(a => a.correct).length;
+  const calculateScore = (): number => {
+    const correct = answers.filter((a: Answer) => a.correct).length;
     return Math.round((correct / quizQuestions.length) * 100);
   };
 
-  const handleAnswerSelect = (optionIndex) => {
+  const handleAnswerSelect = (optionIndex: number): void => {
     setSelectedAnswer(optionIndex);
     setShowExplanation(true);
     
@@ -141,7 +168,7 @@ export default function SeismicPrivacyAcademy() {
     setAnswers([...answers, { questionId: quizQuestions[currentQuestion].id, correct: isCorrect }]);
   };
 
-  const handleNext = () => {
+  const handleNext = (): void => {
     if (currentQuestion < quizQuestions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
       setSelectedAnswer(null);
@@ -152,11 +179,13 @@ export default function SeismicPrivacyAcademy() {
     }
   };
 
-  const generateScoreCard = () => {
+  const generateScoreCard = (): string => {
     const canvas = canvasRef.current;
     if (!canvas) return '';
     
     const ctx = canvas.getContext('2d');
+    if (!ctx) return '';
+    
     canvas.width = 1200;
     canvas.height = 630;
 
@@ -217,7 +246,7 @@ export default function SeismicPrivacyAcademy() {
     return canvas.toDataURL('image/png');
   };
 
-  const shareToTwitter = () => {
+  const shareToTwitter = (): void => {
     const score = calculateScore();
     const badge = getBadge(score);
     const badgeName = badge ? badge.name : '';
@@ -359,7 +388,7 @@ export default function SeismicPrivacyAcademy() {
             </h2>
 
             <div className="space-y-4 mb-6">
-              {question.options.map((option, index) => {
+              {question.options.map((option: QuizOption, index: number) => {
                 const isSelected = selectedAnswer === index;
                 const isCorrect = option.correct;
                 const showResult = showExplanation;
@@ -434,7 +463,7 @@ export default function SeismicPrivacyAcademy() {
   if (currentView === 'results') {
     const score = calculateScore();
     const badge = getBadge(score);
-    const correctAnswers = answers.filter(a => a.correct).length;
+    const correctAnswers = answers.filter((a: Answer) => a.correct).length;
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-200 via-purple-200 to-pink-300 p-6">
