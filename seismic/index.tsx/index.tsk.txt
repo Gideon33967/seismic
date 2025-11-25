@@ -1,0 +1,527 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Lock, Shield, Eye, EyeOff, Trophy, Share2, ChevronRight, Sparkles, Award, Star, Twitter } from 'lucide-react';
+
+// Quiz Questions Database
+const quizQuestions = [
+  {
+    id: 1,
+    level: 'rookie',
+    question: 'Why do we need private blockchains for money?',
+    options: [
+      { text: 'Banks are boring', correct: false },
+      { text: 'To keep salary info secret from strangers', correct: true },
+      { text: 'To make transactions slower', correct: false }
+    ],
+    explanation: "Just like you don't shout your allowance in the cafeteria! Private blockchains keep your money info safe from nosy people.",
+    funFact: '🎒 Your transaction data stays as private as your diary!'
+  },
+  {
+    id: 2,
+    level: 'rookie',
+    question: "What does Seismic's encrypted blockchain mean?",
+    options: [
+      { text: 'It locks data in a digital safe', correct: true },
+      { text: 'It makes transactions invisible', correct: false },
+      { text: "It's a type of earthquake sensor", correct: false }
+    ],
+    explanation: 'Encryption is like putting your secret note in a locked box that only you and your friend can open!',
+    funFact: '🔐 Seismic uses math puzzles so hard, even supercomputers give up!'
+  },
+  {
+    id: 3,
+    level: 'rookie',
+    question: 'When you send money on Seismic, who can see how much you sent?',
+    options: [
+      { text: 'Everyone on the internet', correct: false },
+      { text: 'Only you and the person receiving it', correct: true },
+      { text: 'Your parents and teachers', correct: false }
+    ],
+    explanation: "It's like passing a folded note in class—only you and your friend know what's inside!",
+    funFact: '✉️ Traditional blockchains are like postcards—everyone can read them!'
+  },
+  {
+    id: 4,
+    level: 'builder',
+    question: 'Your fintech app needs to process payroll. Which Seismic feature protects employee salaries?',
+    options: [
+      { text: 'Threshold encryption', correct: true },
+      { text: 'Public ledger transparency', correct: false },
+      { text: 'Smart contract auditing', correct: false }
+    ],
+    explanation: 'Threshold encryption splits secrets into pieces—like a treasure map torn into parts. You need most pieces to see the secret!',
+    funFact: '🧩 Each piece is useless alone, but together they unlock the treasure!'
+  },
+  {
+    id: 5,
+    level: 'builder',
+    question: 'A user wants to prove they earn $50k+ for a loan, but hide their exact salary. What enables this?',
+    options: [
+      { text: 'Zero-knowledge proofs', correct: true },
+      { text: 'Traditional encryption', correct: false },
+      { text: 'Blockchain sharding', correct: false }
+    ],
+    explanation: "It's like proving you're tall enough for a roller coaster without telling your exact height!",
+    funFact: '🎢 You can prove something is true without revealing WHY it is true!'
+  },
+  {
+    id: 6,
+    level: 'builder',
+    question: 'What makes Seismic different from regular blockchains like Bitcoin?',
+    options: [
+      { text: 'Transactions are faster', correct: false },
+      { text: 'Transaction details are encrypted by default', correct: true },
+      { text: 'It uses less electricity', correct: false }
+    ],
+    explanation: 'Bitcoin is like a glass house—everyone sees everything. Seismic is like a house with curtains—you control what people see!',
+    funFact: '🏠 Privacy by default means your business stays YOUR business!'
+  },
+  {
+    id: 7,
+    level: 'expert',
+    question: 'How does Seismic handle compliance requirements like GDPR right to be forgotten?',
+    options: [
+      { text: 'Selective disclosure with encrypted state', correct: true },
+      { text: 'Delete entire blockchain history', correct: false },
+      { text: 'Store data off-chain only', correct: false }
+    ],
+    explanation: 'Seismic encrypts data so well that without keys, it is already forgotten—like shredding a document into confetti!',
+    funFact: '🎊 Encrypted data without keys is mathematically impossible to read!'
+  },
+  {
+    id: 8,
+    level: 'expert',
+    question: 'What is a TEE (Trusted Execution Environment) in Seismic?',
+    options: [
+      { text: 'A hardware vault that processes secrets safely', correct: true },
+      { text: 'A type of smart contract', correct: false },
+      { text: 'A blockchain consensus mechanism', correct: false }
+    ],
+    explanation: 'Think of TEE as a super-secure robot that does math inside a soundproof room—it never tells anyone what it saw!',
+    funFact: '🤖 Even the computer owner cannot peek inside a TEE while it works!'
+  }
+];
+
+// Badge definitions
+const badges = {
+  bronze: { name: 'Privacy Newbie', emoji: '🥉', minScore: 70, color: '#CD7F32' },
+  silver: { name: 'Privacy Builder', emoji: '🥈', minScore: 80, color: '#C0C0C0' },
+  gold: { name: 'Privacy Master', emoji: '🥇', minScore: 90, color: '#FFD700' },
+  diamond: { name: 'Seismic Genius', emoji: '💎', minScore: 100, color: '#B9F2FF' }
+};
+
+const getBadge = (score) => {
+  if (score === 100) return badges.diamond;
+  if (score >= 90) return badges.gold;
+  if (score >= 80) return badges.silver;
+  if (score >= 70) return badges.bronze;
+  return null;
+};
+
+// Main App Component
+export default function SeismicPrivacyAcademy() {
+  const [currentView, setCurrentView] = useState('home');
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [answers, setAnswers] = useState([]);
+  const [showExplanation, setShowExplanation] = useState(false);
+  const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const [quizCompleted, setQuizCompleted] = useState(false);
+  const canvasRef = useRef(null);
+
+  const calculateScore = () => {
+    const correct = answers.filter(a => a.correct).length;
+    return Math.round((correct / quizQuestions.length) * 100);
+  };
+
+  const handleAnswerSelect = (optionIndex) => {
+    setSelectedAnswer(optionIndex);
+    setShowExplanation(true);
+    
+    const isCorrect = quizQuestions[currentQuestion].options[optionIndex].correct;
+    setAnswers([...answers, { questionId: quizQuestions[currentQuestion].id, correct: isCorrect }]);
+  };
+
+  const handleNext = () => {
+    if (currentQuestion < quizQuestions.length - 1) {
+      setCurrentQuestion(currentQuestion + 1);
+      setSelectedAnswer(null);
+      setShowExplanation(false);
+    } else {
+      setQuizCompleted(true);
+      setCurrentView('results');
+    }
+  };
+
+  const generateScoreCard = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return '';
+    
+    const ctx = canvas.getContext('2d');
+    canvas.width = 1200;
+    canvas.height = 630;
+
+    const gradient = ctx.createLinearGradient(0, 0, 1200, 630);
+    gradient.addColorStop(0, '#D4A5B8');
+    gradient.addColorStop(0.5, '#B8869E');
+    gradient.addColorStop(1, '#9C6B84');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 1200, 630);
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+    ctx.beginPath();
+    ctx.arc(1000, 100, 150, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(200, 500, 200, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.beginPath();
+    ctx.moveTo(150, 80);
+    ctx.lineTo(200, 60);
+    ctx.lineTo(250, 80);
+    ctx.lineTo(240, 140);
+    ctx.lineTo(200, 160);
+    ctx.lineTo(160, 140);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 48px Arial';
+    ctx.fillText('Seismic Privacy Academy', 300, 100);
+
+    const score = calculateScore();
+    ctx.font = 'bold 120px Arial';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillText(`${score}%`, 480, 280);
+
+    const badge = getBadge(score);
+    if (badge) {
+      ctx.font = 'bold 56px Arial';
+      ctx.fillText(badge.emoji, 420, 380);
+      ctx.font = 'bold 40px Arial';
+      ctx.fillText(badge.name, 500, 380);
+    }
+
+    ctx.font = '28px Arial';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.fillText('Learn blockchain privacy like you are 10!', 320, 480);
+    
+    ctx.font = 'bold 32px Arial';
+    ctx.fillText('lab.seismic.systems', 420, 540);
+
+    ctx.font = '20px Arial';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.fillText('Built with love by @whi_zy2', 460, 590);
+
+    return canvas.toDataURL('image/png');
+  };
+
+  const shareToTwitter = () => {
+    const score = calculateScore();
+    const badge = getBadge(score);
+    const badgeName = badge ? badge.name : '';
+    const badgeEmoji = badge ? badge.emoji : '🏆';
+    const text = `Just aced the Privacy IQ Challenge on Seismic Academy! 🔐\n\nMy Score: ${score}% ${badgeEmoji} ${badgeName ? `(${badgeName} Badge)` : ''}\n\nLearned how encrypted blockchains protect fintech users—using animations even a 10-year-old could understand! 🎓\n\nTry it yourself: https://lab.seismic.systems\n\n#SeismicPrivacy #BlockchainEducation`;
+    
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+    window.open(twitterUrl, '_blank');
+  };
+
+  useEffect(() => {
+    if (currentView === 'results' && canvasRef.current) {
+      generateScoreCard();
+    }
+  }, [currentView, answers]);
+
+  if (currentView === 'home') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-200 via-purple-200 to-pink-300 p-6">
+        <div className="max-w-4xl mx-auto">
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center mb-12"
+          >
+            <div className="flex justify-center mb-6">
+              <div className="relative w-48 h-48">
+                <motion.div
+                  animate={{ 
+                    rotateY: [0, 360],
+                  }}
+                  transition={{ 
+                    duration: 8,
+                    repeat: Infinity,
+                    ease: "linear"
+                  }}
+                  className="w-full h-full"
+                  style={{
+                    background: 'linear-gradient(135deg, #D4A5B8 0%, #B8869E 50%, #9C6B84 100%)',
+                    clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
+                    boxShadow: '0 20px 60px rgba(156, 107, 132, 0.4)'
+                  }}
+                />
+              </div>
+            </div>
+            
+            <h1 className="text-5xl font-bold text-gray-800 mb-4">
+              Seismic Privacy Academy
+            </h1>
+            <p className="text-2xl text-gray-700 mb-2">
+              Learn blockchain privacy like you are 10, build like a pro! 🚀
+            </p>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Master encrypted blockchains through fun quizzes, earn badges, and share your achievements!
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-6 mb-12">
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg"
+            >
+              <Shield className="w-12 h-12 text-purple-600 mb-4 mx-auto" />
+              <h3 className="text-xl font-bold text-gray-800 mb-2">Kid-Friendly</h3>
+              <p className="text-gray-600">Complex tech explained so simply, even your little sibling would get it!</p>
+            </motion.div>
+
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg"
+            >
+              <Trophy className="w-12 h-12 text-yellow-600 mb-4 mx-auto" />
+              <h3 className="text-xl font-bold text-gray-800 mb-2">Earn Badges</h3>
+              <p className="text-gray-600">From Privacy Newbie to Seismic Genius—unlock achievements as you learn!</p>
+            </motion.div>
+
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg"
+            >
+              <Share2 className="w-12 h-12 text-blue-600 mb-4 mx-auto" />
+              <h3 className="text-xl font-bold text-gray-800 mb-2">Share Success</h3>
+              <p className="text-gray-600">Show off your score on X with beautiful custom cards!</p>
+            </motion.div>
+          </div>
+
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setCurrentView('quiz')}
+            className="mx-auto block bg-gradient-to-r from-purple-600 to-pink-600 text-white px-12 py-6 rounded-full text-2xl font-bold shadow-2xl hover:shadow-purple-500/50 transition-all"
+          >
+            Start Privacy IQ Challenge 🚀
+          </motion.button>
+
+          <div className="mt-12 text-center text-gray-600">
+            <p className="mb-2">Built with ❤️ by <a href="https://x.com/whi_zy2" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline font-semibold">@whi_zy2</a></p>
+            <p className="text-sm">Powered by Seismic — The Encrypted Blockchain</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (currentView === 'quiz' && !quizCompleted) {
+    const question = quizQuestions[currentQuestion];
+    const progress = ((currentQuestion + 1) / quizQuestions.length) * 100;
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-200 via-purple-200 to-pink-300 p-6">
+        <div className="max-w-3xl mx-auto">
+          <div className="mb-8">
+            <div className="flex justify-between text-sm text-gray-700 mb-2">
+              <span>Question {currentQuestion + 1} of {quizQuestions.length}</span>
+              <span>{Math.round(progress)}% Complete</span>
+            </div>
+            <div className="w-full bg-white/50 rounded-full h-3">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${progress}%` }}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 h-3 rounded-full"
+              />
+            </div>
+          </div>
+
+          <motion.div
+            key={currentQuestion}
+            initial={{ opacity: 0, x: 100 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -100 }}
+            className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-2xl mb-6"
+          >
+            <div className="inline-block bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-1 rounded-full text-sm font-semibold mb-4">
+              {question.level.toUpperCase()} LEVEL
+            </div>
+
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">
+              {question.question}
+            </h2>
+
+            <div className="space-y-4 mb-6">
+              {question.options.map((option, index) => {
+                const isSelected = selectedAnswer === index;
+                const isCorrect = option.correct;
+                const showResult = showExplanation;
+
+                return (
+                  <motion.button
+                    key={index}
+                    whileHover={{ scale: showExplanation ? 1 : 1.02 }}
+                    whileTap={{ scale: showExplanation ? 1 : 0.98 }}
+                    onClick={() => !showExplanation && handleAnswerSelect(index)}
+                    disabled={showExplanation}
+                    className={`w-full p-5 rounded-2xl text-left font-semibold transition-all ${
+                      showResult
+                        ? isCorrect
+                          ? 'bg-green-500 text-white'
+                          : isSelected
+                          ? 'bg-red-500 text-white'
+                          : 'bg-gray-200 text-gray-500'
+                        : 'bg-gradient-to-r from-purple-100 to-pink-100 text-gray-800 hover:from-purple-200 hover:to-pink-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span>{option.text}</span>
+                      {showResult && isCorrect && <span className="text-2xl">✓</span>}
+                      {showResult && isSelected && !isCorrect && <span className="text-2xl">✗</span>}
+                    </div>
+                  </motion.button>
+                );
+              })}
+            </div>
+
+            <AnimatePresence>
+              {showExplanation && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-6 mb-6"
+                >
+                  <div className="flex items-start gap-3 mb-3">
+                    <Sparkles className="w-6 h-6 text-purple-600 flex-shrink-0 mt-1" />
+                    <div>
+                      <h3 className="font-bold text-gray-800 mb-2">Explanation:</h3>
+                      <p className="text-gray-700">{question.explanation}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 bg-white/50 rounded-xl p-4">
+                    <Star className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-1" />
+                    <p className="text-gray-700"><strong>Fun Fact:</strong> {question.funFact}</p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {showExplanation && (
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                onClick={handleNext}
+                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+              >
+                {currentQuestion < quizQuestions.length - 1 ? 'Next Question' : 'See Results'}
+                <ChevronRight className="w-6 h-6" />
+              </motion.button>
+            )}
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
+  if (currentView === 'results') {
+    const score = calculateScore();
+    const badge = getBadge(score);
+    const correctAnswers = answers.filter(a => a.correct).length;
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-200 via-purple-200 to-pink-300 p-6">
+        <div className="max-w-3xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white/90 backdrop-blur-sm rounded-3xl p-12 shadow-2xl text-center"
+          >
+            <motion.div
+              animate={{ rotate: [0, 10, -10, 0] }}
+              transition={{ duration: 0.5, repeat: 3 }}
+              className="text-8xl mb-6"
+            >
+              {badge ? badge.emoji : '🎉'}
+            </motion.div>
+
+            <h1 className="text-4xl font-bold text-gray-800 mb-4">
+              {score === 100 ? 'PERFECT SCORE!' : score >= 90 ? 'Outstanding!' : score >= 80 ? 'Great Job!' : score >= 70 ? 'Well Done!' : 'Keep Learning!'}
+            </h1>
+
+            {badge && (
+              <div className="inline-block bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-2 rounded-full text-xl font-bold mb-6">
+                {badge.name} Badge Earned!
+              </div>
+            )}
+
+            <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl p-8 mb-8">
+              <div className="text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mb-4">
+                {score}%
+              </div>
+              <p className="text-xl text-gray-700">
+                You got {correctAnswers} out of {quizQuestions.length} questions correct!
+              </p>
+            </div>
+
+            <p className="text-lg text-gray-700 mb-8 max-w-xl mx-auto">
+              {score === 100 
+                ? "You are a Seismic privacy genius! Ready to build encrypted apps that protect everyone's secrets! 💎"
+                : score >= 90
+                ? "You have mastered blockchain privacy! Share your knowledge and help others learn! 🌟"
+                : score >= 80
+                ? "Solid understanding of privacy tech! You are ready to explore Seismic developer docs! 🚀"
+                : score >= 70
+                ? "Good start! Review the explanations and try again to level up your privacy skills! 📚"
+                : "Every expert was once a beginner! Review the material and give it another shot! 💪"
+              }
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={shareToTwitter}
+                className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+              >
+                <Twitter className="w-6 h-6" />
+                Share on X
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  setCurrentView('home');
+                  setCurrentQuestion(0);
+                  setAnswers([]);
+                  setShowExplanation(false);
+                  setSelectedAnswer(null);
+                  setQuizCompleted(false);
+                }}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl transition-all"
+              >
+                Take Quiz Again
+              </motion.button>
+            </div>
+
+            <div className="text-gray-600 text-sm">
+              <p>Built with ❤️ by <a href="https://x.com/whi_zy2" target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline font-semibold">@whi_zy2</a></p>
+            </div>
+          </motion.div>
+        </div>
+
+        <canvas ref={canvasRef} style={{ display: 'none' }} />
+      </div>
+    );
+  }
+
+  return null;
+}
